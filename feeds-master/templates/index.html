@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Police Radio Transcriptions</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        h1 {
+            color: #333;
+            border-bottom: 2px solid #ddd;
+            padding-bottom: 10px;
+        }
+        #transcriptions {
+            list-style-type: none;
+            padding: 0;
+        }
+        .transcription {
+            background-color: white;
+            padding: 15px;
+            margin-bottom: 10px;
+            border-radius: 5px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        .timestamp {
+            color: #888;
+            font-size: 0.8em;
+            margin-bottom: 5px;
+        }
+        .text {
+            font-size: 1.1em;
+            line-height: 1.4;
+        }
+        .keyword {
+            background-color: #ffeb3b;
+            padding: 2px 5px;
+            border-radius: 3px;
+            font-weight: bold;
+        }
+        .refresh {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 15px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-bottom: 20px;
+        }
+        .auto-refresh {
+            margin-left: 10px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Police Radio Transcriptions</h1>
+    
+    <div>
+        <button class="refresh" onclick="refreshTranscriptions()">Refresh</button>
+        <label class="auto-refresh">
+            <input type="checkbox" id="autoRefresh" checked> Auto-refresh (5s)
+        </label>
+    </div>
+    
+    <ul id="transcriptions"></ul>
+
+    <script>
+        // Function to format date/time
+        function formatTimestamp(timestamp) {
+            const date = new Date(timestamp);
+            return date.toLocaleString();
+        }
+        
+        // Function to highlight keywords in text
+        function highlightKeywords(text, keywords) {
+            if (!keywords || keywords.length === 0) return text;
+            let highlightedText = text;
+            
+            keywords.forEach(keyword => {
+                const regex = new RegExp(keyword, 'gi');
+                highlightedText = highlightedText.replace(
+                    regex, 
+                    match => `<span class="keyword">${match}</span>`
+                );
+            });
+            
+            return highlightedText;
+        }
+        
+        // Function to refresh transcriptions
+        function refreshTranscriptions() {
+            fetch('/api/transcriptions')
+                .then(response => response.json())
+                .then(data => {
+                    const transcriptionsEl = document.getElementById('transcriptions');
+                    transcriptionsEl.innerHTML = '';
+                    
+                    data.forEach(item => {
+                        const li = document.createElement('li');
+                        li.className = 'transcription';
+                        
+                        const timestamp = document.createElement('div');
+                        timestamp.className = 'timestamp';
+                        timestamp.textContent = formatTimestamp(item.timestamp);
+                        
+                        const text = document.createElement('div');
+                        text.className = 'text';
+                        text.innerHTML = highlightKeywords(item.text, item.keywords);
+                        
+                        li.appendChild(timestamp);
+                        li.appendChild(text);
+                        transcriptionsEl.appendChild(li);
+                    });
+                })
+                .catch(error => console.error('Error fetching transcriptions:', error));
+        }
+        
+        // Auto-refresh functionality
+        let refreshInterval;
+        
+        function startAutoRefresh() {
+            refreshTranscriptions();
+            refreshInterval = setInterval(refreshTranscriptions, 5000);
+        }
+        
+        function stopAutoRefresh() {
+            clearInterval(refreshInterval);
+        }
+        
+        document.getElementById('autoRefresh').addEventListener('change', function() {
+            if (this.checked) {
+                startAutoRefresh();
+            } else {
+                stopAutoRefresh();
+            }
+        });
+        
+        // Initial load
+        startAutoRefresh();
+    </script>
+</body>
+</html>

@@ -1,0 +1,10 @@
+cffi
+ffmpeg-python
+google-cloud-speech
+pydub
+requests
+twilio
+webrtcvad
+python-dotenv
+flask
+pyaudio
